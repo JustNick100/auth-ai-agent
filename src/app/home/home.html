@@ -1,0 +1,7 @@
+<div class="app">
+  <div class="card">
+    <h1>Привет, {{ user()?.displayName }}!</h1>
+    <p class="subtitle">Вы вошли как {{ user()?.email }}</p>
+    <button class="primary" style="width: 100%" (click)="logout()">Выйти</button>
+  </div>
+</div>

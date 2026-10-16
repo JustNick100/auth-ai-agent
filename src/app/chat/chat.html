@@ -1,0 +1,197 @@
+<div class="page">
+  <nav class="navbar">
+    <div class="brand">AI-агент NavIQ</div>
+
+    <div class="nav-right">
+      <app-lang-switcher />
+
+      <div class="user-menu">
+        <button class="user-btn" (click)="toggleMenu($event)">
+          {{ user()?.displayName }}
+          <span class="caret" [class.open]="menuOpen()">▾</span>
+        </button>
+
+        @if (menuOpen()) {
+          <div class="dropdown">
+            <button class="dropdown-item" (click)="openProfile()">{{ i18n.t('menu.profile') }}</button>
+            <button class="dropdown-item" (click)="openProgress()">{{ i18n.t('menu.progress') }}</button>
+            <button class="dropdown-item danger" (click)="logout()">{{ i18n.t('menu.logout') }}</button>
+          </div>
+        }
+      </div>
+    </div>
+  </nav>
+
+  <div class="app">
+    @if (view() === 'chat') {
+      <div class="chat">
+        <div class="header">
+          <div class="avatar">AI</div>
+          <div>
+            <div class="title">{{ i18n.t('chat.title') }}</div>
+            <div class="status"><span class="dot"></span> {{ i18n.t('chat.online') }}</div>
+          </div>
+        </div>
+
+        <div class="messages" #messagesEl>
+          <div class="row">
+            <div class="bubble">{{ i18n.t('chat.greeting') }}</div>
+          </div>
+          @for (m of messages(); track $index) {
+            <div class="row" [class.user]="m.role === 'user'">
+              <div class="bubble">{{ m.text }}</div>
+            </div>
+          }
+          @if (typing()) {
+            <div class="row">
+              <div class="bubble">
+                <div class="typing"><span></span><span></span><span></span></div>
+              </div>
+            </div>
+          }
+          @if (doc() && !typing()) {
+            <div class="choices">
+              <button (click)="runMode('resources')">{{ i18n.t('mode.resources') }}</button>
+              <button (click)="runMode('notes')">{{ i18n.t('mode.notes') }}</button>
+              <button (click)="runMode('quiz')">{{ i18n.t('mode.quiz') }}</button>
+            </div>
+          }
+        </div>
+
+        <div class="input-bar">
+          <input #fileInput type="file" accept=".pdf,application/pdf" hidden (change)="onFile($event)" />
+          <button class="attach" (click)="fileInput.click()" [disabled]="typing()" [title]="i18n.t('chat.attach')">📎</button>
+          <input
+            type="text"
+            [(ngModel)]="draft"
+            [placeholder]="i18n.t('chat.placeholder')"
+            (keydown.enter)="send()"
+          />
+          <button (click)="send()" [disabled]="!draft.trim() || typing()">➤</button>
+        </div>
+      </div>
+    } @else if (view() === 'progress') {
+      <div class="chat">
+        <div class="header">
+          <div class="avatar">📈</div>
+          <div>
+            <div class="title">{{ i18n.t('progress.title') }}</div>
+            <div class="status">{{ i18n.t('progress.subtitle') }}</div>
+          </div>
+          <button class="back" (click)="openChat()">{{ i18n.t('back') }}</button>
+        </div>
+
+        <div class="results">
+          @if (results().length === 0) {
+            <div class="empty">
+              {{ i18n.t('progress.empty1') }}<br />
+              {{ i18n.t('progress.empty2') }}
+            </div>
+          } @else {
+            @for (r of results(); track $index) {
+              @let c = r[i18n.lang()];
+              <div class="result-card">
+                <div class="result-top">
+                  <div class="result-topic">{{ c.topic }}</div>
+                  <div class="result-date">{{ r.date | date: 'dd.MM.yyyy HH:mm' }}</div>
+                </div>
+                <div class="bar">
+                  <div class="bar-fill" [style.width.%]="(r.score / r.total) * 100"></div>
+                </div>
+                <div class="result-score">{{ i18n.t('result.score', { score: r.score, total: r.total }) }}</div>
+                <p class="result-summary">{{ c.summary }}</p>
+
+                @if (c.strengths.length) {
+                  <div class="result-block good">
+                    <div class="block-title">{{ i18n.t('result.strengths') }}</div>
+                    <ul>
+                      @for (s of c.strengths; track $index) { <li>{{ s }}</li> }
+                    </ul>
+                  </div>
+                }
+                @if (c.weaknesses.length) {
+                  <div class="result-block bad">
+                    <div class="block-title">{{ i18n.t('result.weaknesses') }}</div>
+                    <ul>
+                      @for (w of c.weaknesses; track $index) { <li>{{ w }}</li> }
+                    </ul>
+                  </div>
+                }
+                @if (c.recommendations.length) {
+                  <div class="result-block tips">
+                    <div class="block-title">{{ i18n.t('result.recommendations') }}</div>
+                    <ul>
+                      @for (t of c.recommendations; track $index) { <li>{{ t }}</li> }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="chat">
+        <div class="header">
+          <div class="avatar">👤</div>
+          <div>
+            <div class="title">{{ i18n.t('profile.title') }}</div>
+            <div class="status">{{ i18n.t('profile.subtitle') }}</div>
+          </div>
+          <button class="back" (click)="openChat()">{{ i18n.t('back') }}</button>
+        </div>
+
+        <div class="profile">
+          <div class="panel">
+            <h2>{{ i18n.t('profile.data') }}</h2>
+            <div class="info-row">
+              <span class="info-label">{{ i18n.t('profile.username') }}</span>
+              <span>{{ user()?.displayName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">{{ i18n.t('profile.email') }}</span>
+              <span>{{ user()?.email }}</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>{{ i18n.t('profile.passwordTitle') }}</h2>
+            <form (ngSubmit)="changePassword()">
+              @if (profileError()) {
+                <div class="error">{{ i18n.t(profileError()) }}</div>
+              }
+              @if (profileInfo()) {
+                <div class="info">{{ i18n.t(profileInfo()) }}</div>
+              }
+              <input
+                type="password"
+                name="currentPassword"
+                [(ngModel)]="currentPassword"
+                [placeholder]="i18n.t('profile.current')"
+                autocomplete="current-password"
+                required
+              />
+              <input
+                type="password"
+                name="newPassword"
+                [(ngModel)]="newPassword"
+                [placeholder]="i18n.t('profile.new')"
+                autocomplete="new-password"
+                required
+              />
+              <input
+                type="password"
+                name="repeatPassword"
+                [(ngModel)]="repeatPassword"
+                [placeholder]="i18n.t('profile.repeat')"
+                autocomplete="new-password"
+                required
+              />
+              <button class="primary" type="submit" [disabled]="profileLoading()">{{ i18n.t('profile.submit') }}</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

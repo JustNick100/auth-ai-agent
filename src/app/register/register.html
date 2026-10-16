@@ -1,0 +1,30 @@
+<div class="app auth-layout">
+  <div class="lang-corner"><app-lang-switcher /></div>
+
+  <div class="hero">
+    <h1 class="hero-title">{{ i18n.t('hero.title') }}</h1>
+    <p class="hero-text">{{ i18n.t('hero.text') }}</p>
+  </div>
+
+  <div class="card">
+    <h1>{{ i18n.t('reg.title') }}</h1>
+    <p class="subtitle">{{ i18n.t('reg.subtitle') }}</p>
+
+    <form (ngSubmit)="onSubmit()">
+      @if (error()) {
+        <div class="error">{{ i18n.t(error()) }}</div>
+      }
+      @if (info()) {
+        <div class="info">{{ i18n.t(info()) }}</div>
+      }
+      <input type="text" name="username" [(ngModel)]="username" [placeholder]="i18n.t('reg.username')" required />
+      <input type="email" name="email" [(ngModel)]="email" [placeholder]="i18n.t('reg.email')" required />
+      <input type="password" name="password" [(ngModel)]="password" [placeholder]="i18n.t('reg.password')" required minlength="6" />
+      <button class="primary" type="submit" [disabled]="loading()">{{ i18n.t('reg.submit') }}</button>
+    </form>
+
+    <p class="switch">
+      {{ i18n.t('reg.haveAccount') }} <a class="link" routerLink="/login">{{ i18n.t('reg.toLogin') }}</a>
+    </p>
+  </div>
+</div>
